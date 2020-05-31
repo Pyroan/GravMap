@@ -8,23 +8,32 @@
 # TODO arg parse.
 # TODO Rolling average for time remaining so it's more stable.
 from multiprocessing import Pool
+from colorsys import hsv_to_rgb
+import time
+import json
 
 from PIL import Image
-from colorsys import hsv_to_rgb
+
 from spacemath import Mass, Vector2
-import time
 
-frames_to_render = 300
-fps = 30
-size = 500, 500
+with open('config.json') as f:
+    config = json.loads(f.read())
+
 masses = []
-
 
 # TODO replace with argument input
 with open("input.txt") as f:
     for l in f.readlines():
-        x, y, mass = list(map(int, l.strip().split(", ")))
+        x, y, mass = list(map(float, l.strip().split(", ")))
         masses.append(Mass(x, y, mass))
+
+
+def screenToWorldSpace(x, y):
+    x2 = x - (config['screen_size'][0]//2)
+    x2 /= config['ppu']
+    y2 = y - (config['screen_size'][1]//2)
+    y2 /= config['ppu']
+    return Vector2(x2, y2)
 
 
 def drawChunk(params):
@@ -35,7 +44,7 @@ def drawChunk(params):
         for y in range(bounds[1], bounds[3]):
             v = Vector2(0, 0)
             for m in masses:
-                v2 = Vector2(m.x, m.y) - Vector2(x, y)
+                v2 = Vector2(m.x, m.y) - screenToWorldSpace(x, y)
                 if v2.magnitude() != 0:
                     v2 *= m.mass / (v2.magnitude()**2)
                 v += v2
@@ -48,10 +57,10 @@ def drawChunk(params):
 
 
 # Return the drawn image i guess.
-def draw(divisions: int):
+def draw(pool: Pool, divisions: int):
     # Generate boundries for each chunk...
-    x = size[0] // divisions
-    y = size[1] // divisions
+    x = config['screen_size'][0] // divisions
+    y = config['screen_size'][1] // divisions
     bounds = []
     for i in range(divisions):
         for j in range(divisions):
@@ -63,11 +72,10 @@ def draw(divisions: int):
         params.append((bound, masses))
 
     # Draw each chunk
-    with Pool() as pool:
-        chunks = pool.map(drawChunk, params)
+    chunks = pool.map(drawChunk, params)
 
     # Copy them into the larger image
-    img = Image.new("RGB", size)
+    img = Image.new("RGB", config['screen_size'])
     for chunk in chunks:
         img.paste(chunk[0], chunk[1])
 
@@ -86,23 +94,24 @@ def updateBodies():
         masses[i].velocity += v
     # Actually move them
     for m in masses:
-        m.x = int(m.x + m.velocity.x)
-        m.y = int(m.y + m.velocity.y)
+        m.x = m.x + m.velocity.x
+        m.y = m.y + m.velocity.y
 
 
 if __name__ == "__main__":
     timeOfLastFrame = time.time()
 
     print('\rRendering... {0:.2f}%, {1:4}s remaining'.format(
-        0.00, '??'), end='', flush=True)
+        0.00, '  ??'), end='', flush=True)
 
     frames = []
-    for i in range(frames_to_render):
-        frames.append(draw(4))
-        updateBodies()
+    with Pool() as pool:
+        for i in range(config['frames_to_render']):
+            frames.append(draw(pool, 4))
+            updateBodies()
 
-        print('\rRendering... {0:.2f}%, {1:4}s remaining'.format(
-            (i/frames_to_render) * 100, int(time.time() - timeOfLastFrame)*(frames_to_render-i)), end='', flush=True)
-        timeOfLastFrame = time.time()
-    frames[0].save("output/test.gif", save_all=True, append_images=frames[1:], optimize=False,
-                   duration=1000//fps, loop=0)
+            print('\rRendering... {0:.2f}%, {1:4}s remaining'.format(
+                (i/config['frames_to_render']) * 100, int((time.time() - timeOfLastFrame)*(config['frames_to_render']-i))), end='', flush=True)
+            timeOfLastFrame = time.time()
+    frames[0].save("output/test2.gif", save_all=True, append_images=frames[1:], optimize=False,
+                   duration=1000//config['fps'], loop=0)
