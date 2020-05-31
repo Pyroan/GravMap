@@ -1,0 +1,6 @@
+{
+    "frames_to_render": 600,
+    "fps": 30,
+    "screen_size": [500, 500],
+    "ppu": 1
+}

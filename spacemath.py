@@ -47,7 +47,7 @@ class Vector2:
 class Mass:
     velocity = Vector2(0, 0)
 
-    def __init__(self, x: int, y: int, mass: int):
+    def __init__(self, x: float, y: float, mass: float):
         self.x = x
         self.y = y
         self.mass = mass
