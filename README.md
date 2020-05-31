@@ -1,7 +1,7 @@
 # GravMap (wip, aka future abandonware)
-Ever wanted to see what gravitational fields look like as  represented by vectors on the HSV color wheel? Too bad!
+Ever wanted to see what gravitational fields look like as  represented by vectors on the HSV color wheel? No? Too bad!
 
-<img src="output/3bodies.gif" width="250" align="center">
+**[See it in action here.](https://gfycat.com/rawdeliriousflee.gif)**
 
 This software is still WIP, so it's basically completely unusable. The world is welcome.
 
