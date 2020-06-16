@@ -1,6 +1,7 @@
 {
-    "frames_to_render": 600,
+    "frames_to_render": 300,
     "fps": 30,
     "screen_size": [500, 500],
-    "ppu": 1
+    "ppu": 5,
+    "animated": true
 }

@@ -47,10 +47,11 @@ class Vector2:
 class Mass:
     velocity = Vector2(0, 0)
 
-    def __init__(self, x: float, y: float, mass: float):
+    def __init__(self, x: float, y: float, mass: float, xvel: float = 0, yvel: float = 0):
         self.x = x
         self.y = y
         self.mass = mass
+        self.velocity = Vector2(xvel, yvel)
 
     def __str__(self):
         return"x: {}, y: {}, mass: {}".format(self.x, self.y, self.mass)
