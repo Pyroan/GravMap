@@ -1,10 +1,10 @@
 {
     "frames_to_render": 300,
     "fps": 30,
-    "screen_size": [500, 500],
-    "ppu": 5,
+    "screen_size": [1000, 1000],
+    "ppu": 10,
     "animated": true,
     "draw_bodies": true,
-    "draw_gravmap": false,
+    "draw_gravmap": true,
     "dump_final_state": true
 }
