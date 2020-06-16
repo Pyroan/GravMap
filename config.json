@@ -3,5 +3,8 @@
     "fps": 30,
     "screen_size": [500, 500],
     "ppu": 5,
-    "animated": true
+    "animated": true,
+    "draw_bodies": true,
+    "draw_gravmap": false,
+    "dump_final_state": true
 }

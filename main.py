@@ -11,7 +11,7 @@ from colorsys import hsv_to_rgb
 import time
 import json
 
-from PIL import Image
+from PIL import Image, ImageDraw
 
 from spacemath import Mass, Vector2
 
@@ -35,23 +35,42 @@ def screenToWorldSpace(x, y):
     return Vector2(x2, y2)
 
 
+def worldToScreenSpace(x, y):
+    x2 = x * config['ppu']
+    x2 += config['screen_size'][0]//2
+    y2 = y * config['ppu']
+    y2 += config['screen_size'][1]//2
+    return Vector2(x2, y2)
+
+
 def drawChunk(params):
     bounds, masses = params[0], params[1]
     # print(masses[0])
     img = Image.new("RGB", (bounds[2]-bounds[0], bounds[3]-bounds[1]))
-    for x in range(bounds[0], bounds[2]):
-        for y in range(bounds[1], bounds[3]):
-            v = Vector2(0, 0)
-            for m in masses:
-                v2 = Vector2(m.x, m.y) - screenToWorldSpace(x, y)
-                if v2.magnitude() != 0:
-                    v2 *= m.mass / (v2.magnitude()**2)
-                v += v2
+    if config['draw_gravmap']:
+        for x in range(bounds[0], bounds[2]):
+            for y in range(bounds[1], bounds[3]):
+                v = Vector2(0, 0)
+                for m in masses:
+                    v2 = Vector2(m.x, m.y) - screenToWorldSpace(x, y)
+                    if v2.magnitude() != 0:
+                        v2 *= m.mass / (v2.magnitude()**2)
+                    v += v2
 
-            theta = v.angle()
-            color = tuple(int(l*256) for l in hsv_to_rgb(theta/360, 1, 1))
+                theta = v.angle()
+                color = tuple(int(l*256) for l in hsv_to_rgb(theta/360, 1, 1))
 
-            img.putpixel((x-bounds[0], y-bounds[1]), color)
+                img.putpixel((x-bounds[0], y-bounds[1]), color)
+    # honestly probably more complicated than it needed to be but that's what happens when you throw these things together
+    if config['draw_bodies']:
+        draw = ImageDraw.Draw(img)
+        for m in masses:
+            # first check if the body is in these bounds
+            pos = worldToScreenSpace(m.x, m.y) - Vector2(bounds[0], bounds[1])
+            if pos.x <= img.width + config['ppu']//2 and pos.y <= img.height + config['ppu']//2:
+                draw.ellipse([pos.x - (m.mass * config['ppu']//2), pos.y - (m.mass * config['ppu']//2),
+                              pos.x + (m.mass * config['ppu']//2), pos.y + (m.mass * config['ppu']//2)],
+                             fill=(255, 255, 255))
     return (img, (bounds[0], bounds[1]))
 
 
