@@ -1,7 +1,6 @@
 # Lol if I was smart I'd figure out a way to not do this
 # extremely slowly
 
-# TODO Make this viewport/world space and not just camera space
 # TODO figure out examples that are actually stable orbits
 # TODO make it so you can supply starting vectors to each mass
 # TODO Make each mass visible as a white circle
@@ -24,8 +23,8 @@ masses = []
 # TODO replace with argument input
 with open("input.txt") as f:
     for l in f.readlines():
-        x, y, mass = list(map(float, l.strip().split(", ")))
-        masses.append(Mass(x, y, mass))
+        x, y, mass, xvel, yvel = list(map(float, l.strip().split(", ")))
+        masses.append(Mass(x, y, mass, xvel, yvel))
 
 
 def screenToWorldSpace(x, y):
@@ -104,14 +103,19 @@ if __name__ == "__main__":
     print('\rRendering... {0:.2f}%, {1:4}s remaining'.format(
         0.00, '  ??'), end='', flush=True)
 
-    frames = []
-    with Pool() as pool:
-        for i in range(config['frames_to_render']):
-            frames.append(draw(pool, 4))
-            updateBodies()
+    if config['animated']:
+        frames = []
+        with Pool() as pool:
+            for i in range(config['frames_to_render']):
+                frames.append(draw(pool, 8))
+                updateBodies()
 
-            print('\rRendering... {0:.2f}%, {1:4}s remaining'.format(
-                (i/config['frames_to_render']) * 100, int((time.time() - timeOfLastFrame)*(config['frames_to_render']-i))), end='', flush=True)
-            timeOfLastFrame = time.time()
-    frames[0].save("output/test2.gif", save_all=True, append_images=frames[1:], optimize=False,
-                   duration=1000//config['fps'], loop=0)
+                print('\rRendering... {0:.2f}%, {1:4}s remaining'.format(
+                    (i/config['frames_to_render']) * 100, int((time.time() - timeOfLastFrame)*(config['frames_to_render']-i))), end='', flush=True)
+                timeOfLastFrame = time.time()
+        frames[0].save("output/out.gif", save_all=True, append_images=frames[1:], optimize=False,
+                       duration=1000//config['fps'], loop=0)
+    else:
+        with Pool() as pool:
+            img = draw(pool, 4)
+            img.save("output/out.png")
