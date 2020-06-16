@@ -132,8 +132,12 @@ if __name__ == "__main__":
                 print('\rRendering... {0:.2f}%, {1:4}s remaining'.format(
                     (i/config['frames_to_render']) * 100, int((time.time() - timeOfLastFrame)*(config['frames_to_render']-i))), end='', flush=True)
                 timeOfLastFrame = time.time()
-        frames[0].save("output/out.gif", save_all=True, append_images=frames[1:], optimize=False,
+        frames[0].save("output/out2.gif", save_all=True, append_images=frames[1:], optimize=False,
                        duration=1000//config['fps'], loop=0)
+        # Print final state of all objects so we can stitch together smaller gifs into larger ones.
+        if config['dump_final_state']:
+            for m in masses:
+                print("\n" + str(m))
     else:
         with Pool() as pool:
             img = draw(pool, 4)

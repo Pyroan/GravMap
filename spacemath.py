@@ -54,4 +54,4 @@ class Mass:
         self.velocity = Vector2(xvel, yvel)
 
     def __str__(self):
-        return"x: {}, y: {}, mass: {}".format(self.x, self.y, self.mass)
+        return"x: {}\ny: {}\nmass: {}\nvelocity: {}\n".format(self.x, self.y, self.mass, (self.velocity.x, self.velocity.y))
