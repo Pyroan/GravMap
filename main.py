@@ -25,7 +25,9 @@ with open("input/3bodies.txt") as f:
         masses.append(Mass(x, y, mass, xvel, yvel))
 
 
-def updateBodies():
+def update_bodies():
+    """Move each body to its new location and update its velocity."""
+
     # Compute velocity for each body which is necessarily n^2 LAME
     for i in range(len(masses)):
         v = Vector2(0, 0)
@@ -53,7 +55,7 @@ if __name__ == "__main__":
             for i in range(config['frames_to_render']):
                 # frames.append(draw(pool, 8))
                 draw(pool, masses, 8).save("output/mp4test/{}.png".format(i))
-                updateBodies()
+                update_bodies()
 
                 print('\rRendering... {0:.2f}%, {1:4}s remaining'.format((
                     i/config['frames_to_render']) * 100,
