@@ -3,6 +3,7 @@
 import json
 from colorsys import hsv_to_rgb
 from multiprocessing import Pool
+
 from PIL import Image, ImageDraw
 
 from spacemath import Vector2
@@ -11,7 +12,7 @@ with open('config.json') as f:
     config = json.loads(f.read())
 
 
-def screenToWorldSpace(x, y):
+def screen_to_world_space(x, y):
     x2 = x - (config['screen_size'][0]//2)
     x2 /= config['ppu']
     y2 = y - (config['screen_size'][1]//2)
@@ -19,7 +20,7 @@ def screenToWorldSpace(x, y):
     return Vector2(x2, y2)
 
 
-def worldToScreenSpace(x, y):
+def world_to_screen_space(x, y):
     x2 = x * config['ppu']
     x2 += config['screen_size'][0]//2
     y2 = y * config['ppu']
@@ -27,12 +28,16 @@ def worldToScreenSpace(x, y):
     return Vector2(x2, y2)
 
 
-def drawGravMap(img, bounds, masses):
+def draw_grav_map(img, bounds, masses):
+    """Draw the pretty colors at each pixel.
+
+    Basically a really slow fragment shader
+    """
     for x in range(bounds[0], bounds[2]):
         for y in range(bounds[1], bounds[3]):
             v = Vector2(0, 0)
             for m in masses:
-                v2 = Vector2(m.x, m.y) - screenToWorldSpace(x, y)
+                v2 = Vector2(m.x, m.y) - screen_to_world_space(x, y)
                 if v2.magnitude() != 0:
                     v2 *= m.mass / (v2.magnitude()**2)
                 v += v2
@@ -43,31 +48,32 @@ def drawGravMap(img, bounds, masses):
             img.putpixel((x-bounds[0], y-bounds[1]), color)
 
 
-def drawBodies(img, bounds, masses):
+def draw_bodies(img, bounds, masses):
     # honestly probably more complicated than it needed to be but that's what happens when you throw these things together
     draw = ImageDraw.Draw(img)
     for m in masses:
         # first check if the body is in these bounds
-        pos = worldToScreenSpace(m.x, m.y) - Vector2(bounds[0], bounds[1])
+        pos = world_to_screen_space(m.x, m.y) - Vector2(bounds[0], bounds[1])
         if pos.x <= img.width + config['ppu']//2 and pos.y <= img.height + config['ppu']//2:
             draw.ellipse([pos.x - (m.mass * config['ppu']//2), pos.y - (m.mass * config['ppu']//2),
                           pos.x + (m.mass * config['ppu']//2), pos.y + (m.mass * config['ppu']//2)],
                          fill=(255, 255, 255))
 
 
-def drawChunk(params):
+def draw_chunk(params):
     bounds, masses = params[0], params[1]
     # print(masses[0])
     img = Image.new("RGB", (bounds[2]-bounds[0], bounds[3]-bounds[1]))
     if config['draw_gravmap']:
-        drawGravMap(img, bounds, masses)
+        draw_grav_map(img, bounds, masses)
     if config['draw_bodies']:
-        drawBodies(img, bounds, masses)
+        draw_bodies(img, bounds, masses)
     return (img, (bounds[0], bounds[1]))
 
 
-# Return the drawn image i guess.
 def draw(pool: Pool, masses, divisions: int) -> Image:
+    """Return the drawn image I guess."""
+
     # Generate boundaries for each chunk...
     x = config['screen_size'][0] // divisions
     y = config['screen_size'][1] // divisions
@@ -82,7 +88,7 @@ def draw(pool: Pool, masses, divisions: int) -> Image:
         params.append((bound, masses))
 
     # Draw each chunk
-    chunks = pool.map(drawChunk, params)
+    chunks = pool.map(draw_chunk, params)
 
     # Copy them into the larger image
     img = Image.new("RGB", config['screen_size'])

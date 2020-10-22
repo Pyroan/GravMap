@@ -11,8 +11,8 @@ class Vector2:
     def magnitude(self) -> float:
         return sqrt(self.x*self.x + self.y*self.y)
 
-    # This is way too complicated for what it should be. Hecking atan.
     def angle(self) -> float:
+        # This is way too complicated for what it should be. Hecking atan.
         if self.x == 0:
             if self.y == 0:
                 theta = 0.0
