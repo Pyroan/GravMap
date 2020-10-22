@@ -2,8 +2,6 @@
 # extremely slowly
 
 # TODO figure out examples that are actually stable orbits
-# TODO make it so you can supply starting vectors to each mass
-# TODO Make each mass visible as a white circle
 # TODO arg parse.
 # TODO Rolling average for time remaining so it's more stable.
 from multiprocessing import Pool
@@ -21,7 +19,7 @@ with open('config.json') as f:
 masses = []
 
 # TODO replace with argument input
-with open("input.txt") as f:
+with open("3bodies.txt") as f:
     for l in f.readlines():
         x, y, mass, xvel, yvel = list(map(float, l.strip().split(", ")))
         masses.append(Mass(x, y, mass, xvel, yvel))
@@ -59,7 +57,7 @@ def drawChunk(params):
 
                 theta = v.angle()
                 color = tuple(int(l*256) for l in hsv_to_rgb(theta/360, 1, 1))
-
+                # if theta < 1 or theta > 359 or 179 < theta < 181 or 59 < theta < 61 or 239 < theta < 241 or 119 < theta < 121 or 299 < theta < 301:
                 img.putpixel((x-bounds[0], y-bounds[1]), color)
     # honestly probably more complicated than it needed to be but that's what happens when you throw these things together
     if config['draw_bodies']:
@@ -75,8 +73,8 @@ def drawChunk(params):
 
 
 # Return the drawn image i guess.
-def draw(pool: Pool, divisions: int):
-    # Generate boundries for each chunk...
+def draw(pool: Pool, divisions: int) -> Image:
+    # Generate boundaries for each chunk...
     x = config['screen_size'][0] // divisions
     y = config['screen_size'][1] // divisions
     bounds = []
@@ -123,17 +121,22 @@ if __name__ == "__main__":
         0.00, '  ??'), end='', flush=True)
 
     if config['animated']:
-        frames = []
+        # frames = []
         with Pool() as pool:
             for i in range(config['frames_to_render']):
-                frames.append(draw(pool, 8))
+                # frames.append(draw(pool, 8))
+                draw(pool, 8).save("output/mp4test/{}.png".format(i))
                 updateBodies()
 
-                print('\rRendering... {0:.2f}%, {1:4}s remaining'.format(
-                    (i/config['frames_to_render']) * 100, int((time.time() - timeOfLastFrame)*(config['frames_to_render']-i))), end='', flush=True)
+                print('\rRendering... {0:.2f}%, {1:4}s remaining'.format((
+                    i/config['frames_to_render']) * 100,
+                    int((time.time() - timeOfLastFrame)*(config['frames_to_render']-i))),
+                    end='',
+                    flush=True)
                 timeOfLastFrame = time.time()
-        frames[0].save("output/out2.gif", save_all=True, append_images=frames[1:], optimize=False,
-                       duration=1000//config['fps'], loop=0)
+
+        # frames[0].save("output/equidistant.gif", save_all=True, append_images=frames[1:], optimize=False,
+                #    duration=1000//config['fps'], loop=0)
         # Print final state of all objects so we can stitch together smaller gifs into larger ones.
         if config['dump_final_state']:
             for m in masses:
@@ -141,4 +144,4 @@ if __name__ == "__main__":
     else:
         with Pool() as pool:
             img = draw(pool, 4)
-            img.save("output/out.png")
+            img.save("output/mp4test/0.png")
