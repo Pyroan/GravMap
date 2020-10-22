@@ -1,7 +1,7 @@
 {
-    "frames_to_render": 300,
-    "fps": 30,
-    "screen_size": [1000, 1000],
+    "frames_to_render": 3600,
+    "fps": 60,
+    "screen_size": [1920, 1080],
     "ppu": 10,
     "animated": true,
     "draw_bodies": true,
