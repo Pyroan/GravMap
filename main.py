@@ -5,13 +5,13 @@
 # TODO arg parse.
 # TODO Rolling average for time remaining so it's more stable.
 from multiprocessing import Pool
-from colorsys import hsv_to_rgb
 import time
 import json
 
 from PIL import Image, ImageDraw
 
 from spacemath import Mass, Vector2
+from gravplotter import draw
 
 with open('config.json') as f:
     config = json.loads(f.read())
@@ -19,83 +19,10 @@ with open('config.json') as f:
 masses = []
 
 # TODO replace with argument input
-with open("3bodies.txt") as f:
+with open("input/3bodies.txt") as f:
     for l in f.readlines():
         x, y, mass, xvel, yvel = list(map(float, l.strip().split(", ")))
         masses.append(Mass(x, y, mass, xvel, yvel))
-
-
-def screenToWorldSpace(x, y):
-    x2 = x - (config['screen_size'][0]//2)
-    x2 /= config['ppu']
-    y2 = y - (config['screen_size'][1]//2)
-    y2 /= config['ppu']
-    return Vector2(x2, y2)
-
-
-def worldToScreenSpace(x, y):
-    x2 = x * config['ppu']
-    x2 += config['screen_size'][0]//2
-    y2 = y * config['ppu']
-    y2 += config['screen_size'][1]//2
-    return Vector2(x2, y2)
-
-
-def drawChunk(params):
-    bounds, masses = params[0], params[1]
-    # print(masses[0])
-    img = Image.new("RGB", (bounds[2]-bounds[0], bounds[3]-bounds[1]))
-    if config['draw_gravmap']:
-        for x in range(bounds[0], bounds[2]):
-            for y in range(bounds[1], bounds[3]):
-                v = Vector2(0, 0)
-                for m in masses:
-                    v2 = Vector2(m.x, m.y) - screenToWorldSpace(x, y)
-                    if v2.magnitude() != 0:
-                        v2 *= m.mass / (v2.magnitude()**2)
-                    v += v2
-
-                theta = v.angle()
-                color = tuple(int(l*256) for l in hsv_to_rgb(theta/360, 1, 1))
-                # if theta < 1 or theta > 359 or 179 < theta < 181 or 59 < theta < 61 or 239 < theta < 241 or 119 < theta < 121 or 299 < theta < 301:
-                img.putpixel((x-bounds[0], y-bounds[1]), color)
-    # honestly probably more complicated than it needed to be but that's what happens when you throw these things together
-    if config['draw_bodies']:
-        draw = ImageDraw.Draw(img)
-        for m in masses:
-            # first check if the body is in these bounds
-            pos = worldToScreenSpace(m.x, m.y) - Vector2(bounds[0], bounds[1])
-            if pos.x <= img.width + config['ppu']//2 and pos.y <= img.height + config['ppu']//2:
-                draw.ellipse([pos.x - (m.mass * config['ppu']//2), pos.y - (m.mass * config['ppu']//2),
-                              pos.x + (m.mass * config['ppu']//2), pos.y + (m.mass * config['ppu']//2)],
-                             fill=(255, 255, 255))
-    return (img, (bounds[0], bounds[1]))
-
-
-# Return the drawn image i guess.
-def draw(pool: Pool, divisions: int) -> Image:
-    # Generate boundaries for each chunk...
-    x = config['screen_size'][0] // divisions
-    y = config['screen_size'][1] // divisions
-    bounds = []
-    for i in range(divisions):
-        for j in range(divisions):
-            bounds.append((i*x, j*y, (i+1)*x, (j+1)*y))
-        (bounds, masses)
-
-    params = []
-    for bound in bounds:
-        params.append((bound, masses))
-
-    # Draw each chunk
-    chunks = pool.map(drawChunk, params)
-
-    # Copy them into the larger image
-    img = Image.new("RGB", config['screen_size'])
-    for chunk in chunks:
-        img.paste(chunk[0], chunk[1])
-
-    return img
 
 
 def updateBodies():
@@ -125,7 +52,7 @@ if __name__ == "__main__":
         with Pool() as pool:
             for i in range(config['frames_to_render']):
                 # frames.append(draw(pool, 8))
-                draw(pool, 8).save("output/mp4test/{}.png".format(i))
+                draw(pool, masses, 8).save("output/mp4test/{}.png".format(i))
                 updateBodies()
 
                 print('\rRendering... {0:.2f}%, {1:4}s remaining'.format((
@@ -143,5 +70,5 @@ if __name__ == "__main__":
                 print("\n" + str(m))
     else:
         with Pool() as pool:
-            img = draw(pool, 4)
-            img.save("output/mp4test/0.png")
+            img = draw(pool, masses, 4)
+            img.save("output/0.png")

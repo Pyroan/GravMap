@@ -3,7 +3,7 @@
     "fps": 60,
     "screen_size": [1920, 1080],
     "ppu": 10,
-    "animated": true,
+    "animated": false,
     "draw_bodies": true,
     "draw_gravmap": true,
     "dump_final_state": true
