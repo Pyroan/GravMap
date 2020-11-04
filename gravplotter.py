@@ -28,6 +28,16 @@ def world_to_screen_space(x, y):
     return Vector2(x2, y2)
 
 
+def band_value(x: int, y: int) -> float:
+    """Returns how close x is to being a multiple of y (0..1)"""
+    n = (x + y // 2) % y
+    if n > y // 2:
+        n = y - n
+    value = n / (y//2)
+    # Now to attenuate (ease?) it based on bandspread
+    return value ** config['bandease']
+
+
 def draw_grav_map(img, bounds, masses):
     """Draw the pretty colors at each pixel.
 
@@ -43,7 +53,12 @@ def draw_grav_map(img, bounds, masses):
                 v += v2
 
             theta = v.angle()
-            color = tuple(int(l*256) for l in hsv_to_rgb(theta/360, 1, 1))
+
+            value = 1
+            if config['bands'] > 0:
+                value = band_value(theta, 360/config['bands'])
+
+            color = tuple(int(l*256) for l in hsv_to_rgb(theta/360, 1, value))
             # if theta < 1 or theta > 359 or 179 < theta < 181 or 59 < theta < 61 or 239 < theta < 241 or 119 < theta < 121 or 299 < theta < 301:
             img.putpixel((x-bounds[0], y-bounds[1]), color)
 

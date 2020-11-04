@@ -2,11 +2,11 @@
 # extremely slowly
 
 # TODO figure out examples that are actually stable orbits
-# TODO arg parse.
 # TODO Rolling average for time remaining so it's more stable.
+import argparse
+import json
 from multiprocessing import Pool
 import time
-import json
 
 from PIL import Image, ImageDraw
 
@@ -16,16 +16,8 @@ from gravplotter import draw
 with open('config.json') as f:
     config = json.loads(f.read())
 
-masses = []
 
-# TODO replace with argument input
-with open("input/3bodies.txt") as f:
-    for l in f.readlines():
-        x, y, mass, xvel, yvel = list(map(float, l.strip().split(", ")))
-        masses.append(Mass(x, y, mass, xvel, yvel))
-
-
-def update_bodies():
+def update_bodies(masses):
     """Move each body to its new location and update its velocity."""
 
     # Compute velocity for each body which is necessarily n^2 LAME
@@ -44,6 +36,14 @@ def update_bodies():
 
 
 if __name__ == "__main__":
+    masses = []
+
+    # TODO replace with argument input
+    with open("input/3bodies.txt") as f:
+        for l in f.readlines():
+            x, y, mass, xvel, yvel = list(map(float, l.strip().split(", ")))
+            masses.append(Mass(x, y, mass, xvel, yvel))
+
     timeOfLastFrame = time.time()
 
     print('\rRendering... {0:.2f}%, {1:4}s remaining'.format(
@@ -54,8 +54,9 @@ if __name__ == "__main__":
         with Pool() as pool:
             for i in range(config['frames_to_render']):
                 # frames.append(draw(pool, 8))
-                draw(pool, masses, 8).save("output/mp4test/{}.png".format(i))
-                update_bodies()
+                draw(pool, masses, 8).save(
+                    "output/mp4testbodies/{}.png".format(i))
+                update_bodies(masses)
 
                 print('\rRendering... {0:.2f}%, {1:4}s remaining'.format((
                     i/config['frames_to_render']) * 100,
