@@ -6,5 +6,8 @@
     "animated": false,
     "draw_bodies": true,
     "draw_gravmap": true,
-    "dump_final_state": true
+    "dump_final_state": true,
+
+    "bands": 10,
+    "bandease": 10
 }
